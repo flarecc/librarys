@@ -313,5 +313,81 @@ input should the whole output not fit on the display.
 function txt.pagedTabulate(...)
     return tabulateCommon(true, ...)
 end
+function txt.complete(sSearchText, tSearchTable)
+    expect(1, sSearchText, "string")
+    expect(2, tSearchTable, "table", "nil")
+
+    if g_tLuaKeywords[sSearchText] then return tEmpty end
+    local nStart = 1
+    local nDot = string.find(sSearchText, ".", nStart, true)
+    local tTable = tSearchTable or _ENV
+    while nDot do
+        local sPart = string.sub(sSearchText, nStart, nDot - 1)
+        local value = tTable[sPart]
+        if type(value) == "table" then
+            tTable = value
+            nStart = nDot + 1
+            nDot = string.find(sSearchText, ".", nStart, true)
+        else
+            return tEmpty
+        end
+    end
+    local nColon = string.find(sSearchText, ":", nStart, true)
+    if nColon then
+        local sPart = string.sub(sSearchText, nStart, nColon - 1)
+        local value = tTable[sPart]
+        if type(value) == "table" then
+            tTable = value
+            nStart = nColon + 1
+        else
+            return tEmpty
+        end
+    end
+
+    local sPart = string.sub(sSearchText, nStart)
+    local nPartLength = #sPart
+
+    local tResults = {}
+    local tSeen = {}
+    while tTable do
+        for k, v in pairs(tTable) do
+            if not tSeen[k] and type(k) == "string" then
+                if string.find(k, sPart, 1, true) == 1 then
+                    if not g_tLuaKeywords[k] and string.match(k, "^[%a_][%a%d_]*$") then
+                        local sResult = string.sub(k, nPartLength + 1)
+                        if nColon then
+                            if type(v) == "function" then
+                                table.insert(tResults, sResult .. "(")
+                            elseif type(v) == "table" then
+                                local tMetatable = getmetatable(v)
+                                if tMetatable and (type(tMetatable.__call) == "function" or  type(tMetatable.__call) == "table") then
+                                    table.insert(tResults, sResult .. "(")
+                                end
+                            end
+                        else
+                            if type(v) == "function" then
+                                sResult = sResult .. "("
+                            elseif type(v) == "table" and next(v) ~= nil then
+                                sResult = sResult .. "."
+                            end
+                            table.insert(tResults, sResult)
+                        end
+                    end
+                end
+            end
+            tSeen[k] = true
+        end
+        local tMetatable = getmetatable(tTable)
+        if tMetatable and type(tMetatable.__index) == "table" then
+            tTable = tMetatable.__index
+        else
+            tTable = nil
+        end
+    end
+
+    table.sort(tResults)
+    return tResults
+end
+
 
 return txt

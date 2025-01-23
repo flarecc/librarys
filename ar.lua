@@ -12,7 +12,9 @@ local ar = {}
 -- Loads an archive into a table
 function ar.load(path)
     if not fs.exists(path) then return nil end
+    print(path)
     local file,e = fs.open(path, "r")
+    print(e)
     local oldread = file.read
     local seek = 0
     file.read = function(c) if c then
@@ -75,7 +77,7 @@ end
 -- Writes a table entry to a file
 function ar.write(v, p)
     local file = fs.open(p, "w")
-    for s in string.gmatch(v.data, ".") do file.write(string.byte(s)) end
+    for s in string.gmatch(v.data, ".") do file.write(s) end
     file.close()
     if fs.setPermissions and v.owner ~= 0 then
         fs.setPermissions(p, v.owner, u2cc(v.mode) + bit.band(v.mode, 0x800) / 0x80)

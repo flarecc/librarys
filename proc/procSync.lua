@@ -11,6 +11,7 @@ function sync:queue()
             end
             return table.remove(q, 1)
         end
+        
         function queue:push(data)
             table.insert(q,data)
         end
@@ -26,6 +27,12 @@ function sync:fetchQueue(pid)
     function queue:pull()
         while #q == 0 do
             coroutine.yield()
+        end
+        return table.remove(q, 1)
+    end
+    function queue:pullQuick()
+        if #q == 0 then
+            return
         end
         return table.remove(q, 1)
     end

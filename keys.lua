@@ -51,7 +51,7 @@ local tKeys = {
 	nil,		"end",		"down",		"pageDown",	"insert",		-- 206
 	"delete"														-- 211
 }
-
+---@module keys
 local keys = {}
 for nKey, sKey in pairs( tKeys ) do
 	keys[sKey] = nKey
